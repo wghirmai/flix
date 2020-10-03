@@ -1,31 +1,37 @@
 //
-//  MoviesViewController.swift
+//  MovieGridViewController.swift
 //  flix
 //
-//  Created by Winta Ghirmai on 9/25/20.
+//  Created by Winta Ghirmai on 10/2/20.
 //  Copyright © 2020 Codepath. All rights reserved.
 //
 
 import UIKit
 import AlamofireImage
 
-class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
-   
+
+class MovieGridViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource{
     
-//variables defined here are properties
-     // DID: Store the movies in a property to use elsewhere
-    //an array of dictionaries(tyoe of key:tyoe of value parantheseses at the end to indicate creation
+    
+    
+    @IBOutlet weak var collectionView: UICollectionView!
+    
     var movies = [[String:Any]]()
-    
-    @IBOutlet var tableView: UITableView!
-    
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        tableView.dataSource=self
-        tableView.delegate=self
-        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
+        
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        
+        let layout = collectionView.collectionViewLayout as! UICollectionViewFlowLayout
+        
+        layout.minimumLineSpacing = 4
+        layout.minimumInteritemSpacing = 0
+        let width = (view.frame.size.width - layout.minimumInteritemSpacing * 3) / 2
+        layout.itemSize = CGSize(width: width, height: width * 3 / 2)
+        
+        let url = URL(string: "https://api.themoviedb.org/3/movie/297762/similar?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         let task = session.dataTask(with: request) { (data, response, error) in
@@ -36,61 +42,54 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
               let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
             // DID: Get the array of movies with casting
             self.movies = dataDictionary["results"] as! [[String: Any]]
+            
+            print(self.movies)
+            self.collectionView.reloadData()
+            
             //trying to sort by title in alphabetical order
             //self.movies = (self.movies as NSArray).sortedArray(using: [NSSortDescriptor(key: "title", ascending: true)]) as! [[String:Any]]
             //print(self.movies.map { $0["title"] })
               // DID: Reload your table view data, will call below functions again
-            self.tableView.reloadData()
+          
 
            }
+            
         }
         task.resume()
     }
+   
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return movies.count
-       }
-       
-       func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell") as! MovieCell
-        //swift optionals ?/!
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieGridCell", for: indexPath) as! MovieGridCell
+    
         
-        
-        let movie = movies[indexPath.row]
-        let title = movie["title"] as! String
-        let synopsis = movie["overview"] as! String 
-       
-        
-        
-        cell.synopsisLabel.text = synopsis
-        cell.titleLabel.text = title
-        
+        let movie = movies[indexPath.item]
         let baseUrl = "https://image.tmdb.org/t/p/w185"
         let posterPath = movie["poster_path"] as! String
         let posterUrl = URL(string: baseUrl + posterPath)
         
         cell.posterView.af_setImage(withURL: posterUrl!)
         
-        return cell
-       }
+        
+        
+        
+    return cell
+    }
     
+    
+    /*
     // MARK: - Navigation
-    //leaving your screen and will prepare a new screen, everytime I switch screens
+
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destination.
         // Pass the selected object to the new view controller.
-        let cell = sender as! UITableViewCell
-        let indexPath = tableView.indexPath(for: cell)!
-        let movie = movies[indexPath.row]
-        
-        let detailsViewController = segue.destination as! MoviesDetailsViewController
-        detailsViewController.movie = movie
-        
-        tableView.deselectRow(at: indexPath, animated: true)
-        
     }
+    */
 
-
-    
 }
